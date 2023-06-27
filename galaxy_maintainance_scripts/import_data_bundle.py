@@ -1,11 +1,14 @@
-from tempfile import NamedTemporaryFile
 from typing import Optional
 
 import click
 import yaml
 
-from galaxy.app import GalaxyManagerApplication
-from galaxy.managers.tool_data import ToolDataImportManager
+from galaxy.config import GalaxyAppConfiguration
+from galaxy.files.uris import stream_url_to_file
+from galaxy.tool_util.data import (
+    BundleProcessingOptions,
+    ToolDataTableManager,
+)
 
 
 @click.command(help="Import tool data bundle. URI can be a path to a zipped file or directory.")
@@ -19,19 +22,25 @@ from galaxy.managers.tool_data import ToolDataImportManager
 @click.argument("uri")
 def run_import_data_bundle(uri: str, galaxy_config_file: str, tool_data_file_path: Optional[str] = None):
     with open(galaxy_config_file) as fh:
-        galaxy_config = yaml.safe_load(fh)
-        galaxy_config["file_sources"] = []
-        galaxy_config["file_source_config_file"] = None
-        galaxy_config["vault_config_file"] = NamedTemporaryFile().name
-    app = GalaxyManagerApplication(
-        use_converters=False,
-        use_display_applications=False,
-        configure_logging=False,
-        check_migrate_databases=False,
-        **galaxy_config,
+        galaxy_config = GalaxyAppConfiguration(**yaml.safe_load(fh))
+    table_manager = ToolDataTableManager(
+        tool_data_path=galaxy_config.tool_data_path,
+        config_filename=[galaxy_config.shed_tool_data_table_config, galaxy_config.tool_data_table_config_path]
     )
-    import_manager = ToolDataImportManager(app)
-    import_manager.import_data_bundle_by_uri(app.config, uri=uri, tool_data_file_path=tool_data_file_path)
+    options = BundleProcessingOptions(
+        what="data import",  # An alternative to this is sticking this in the bundle, only used for logging.
+        data_manager_path=galaxy_config.galaxy_data_manager_data_path,
+        target_config_file=galaxy_config.data_manager_config_file,
+        tool_data_file_path=tool_data_file_path,
+    )
+    if uri.startswith("file://"):
+        target = uri[len("file://") :]
+    else:
+        target = stream_url_to_file(uri)
+    table_manager.import_bundle(
+        target,
+        options,
+    )
 
 
 if __name__ == "__main__":
