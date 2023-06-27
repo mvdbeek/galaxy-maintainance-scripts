@@ -1,6 +1,6 @@
 
-.. image:: https://badge.fury.io/py/galaxy-maintainance-scripts.svg
-   :target: https://pypi.org/project/galaxy-maintainance-scripts/
+.. image:: https://badge.fury.io/py/galaxy-maintenance-scripts.svg
+   :target: https://pypi.org/project/galaxy-maintenance-scripts/
 
 
 
@@ -9,7 +9,7 @@ Overview
 
 Scripts to create new Galaxy_ releases.
 
-* Code: https://github.com/galaxyproject/galaxy-maintainance-scripts
+* Code: https://github.com/galaxyproject/galaxy-maintenance-scripts
 
 .. _Galaxy: http://galaxyproject.org/
 

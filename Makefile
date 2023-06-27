@@ -2,9 +2,9 @@
 VENV?=.venv
 IN_VENV=if [ -f $(VENV)/bin/activate ]; then . $(VENV)/bin/activate; fi;
 UPSTREAM?=galaxyproject
-SOURCE_DIR?=galaxy_maintainance_scripts
-PROJECT_URL?=https://github.com/galaxyproject/galaxy_maintainance_scripts
-PROJECT_NAME?=galaxy_maintainance_scripts
+SOURCE_DIR?=galaxy_maintenance_scripts
+PROJECT_URL?=https://github.com/galaxyproject/galaxy_maintenance_scripts
+PROJECT_NAME?=galaxy_maintenance_scripts
 TEST_DIR?=tests
 # Open resource on Mac OS X or Linux
 OPEN_RESOURCE=bash -c 'open $$0 || xdg-open $$0'
