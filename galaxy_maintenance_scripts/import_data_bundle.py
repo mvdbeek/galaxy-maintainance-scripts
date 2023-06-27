@@ -1,3 +1,4 @@
+import os
 from typing import Optional
 
 import click
@@ -5,10 +6,8 @@ import yaml
 
 from galaxy.config import GalaxyAppConfiguration
 from galaxy.files.uris import stream_url_to_file
-from galaxy.tool_util.data import (
-    BundleProcessingOptions,
-    ToolDataTableManager,
-)
+from galaxy.tool_util.data import BundleProcessingOptions
+from galaxy.tools.data import ToolDataTableManager
 
 
 @click.command(help="Import tool data bundle. URI can be a path to a zipped file or directory.")
@@ -22,10 +21,16 @@ from galaxy.tool_util.data import (
 @click.argument("uri")
 def run_import_data_bundle(uri: str, galaxy_config_file: str, tool_data_file_path: Optional[str] = None):
     with open(galaxy_config_file) as fh:
-        galaxy_config = GalaxyAppConfiguration(**yaml.safe_load(fh))
+        galaxy_config = GalaxyAppConfiguration(override_tempdir=False, **yaml.safe_load(fh))
+    tool_data_table_config_files = []
+    if os.path.exists(galaxy_config.shed_tool_data_table_config):
+        tool_data_table_config_files.append(galaxy_config.shed_tool_data_table_config)
+    for data_table_config_path in galaxy_config.tool_data_table_config_path:
+        if os.path.exists(data_table_config_path):
+            tool_data_table_config_files.append(data_table_config_path)
     table_manager = ToolDataTableManager(
         tool_data_path=galaxy_config.tool_data_path,
-        config_filename=[galaxy_config.shed_tool_data_table_config, galaxy_config.tool_data_table_config_path]
+        config_filename=tool_data_table_config_files,
     )
     options = BundleProcessingOptions(
         what="data import",  # An alternative to this is sticking this in the bundle, only used for logging.
