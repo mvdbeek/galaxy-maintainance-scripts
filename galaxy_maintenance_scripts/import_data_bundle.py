@@ -11,7 +11,9 @@ from galaxy.tools.data import ToolDataTableManager
 
 
 @click.command(help="Import tool data bundle. URI can be a path to a zipped file or directory.")
-@click.option("-c", "--galaxy-config-file", type=click.Path(exists=True, resolve_path=True))
+@click.option("--tool-data-path", type=click.Path(exists=True, resolve_path=True), help="Path were bundle data should be written to")
+@click.option("--data-table-config-path", type=click.Path(exists=True, resolve_path=True), help="Path to tool_data_table_conf.xml file")
+@click.option("--data-manager-config-file", type=click.Path(exists=True, resolve_path=True), help="Path to shed_data_manager_conf.xml file")
 @click.option(
     "-t",
     "--tool-data-file-path",
@@ -19,23 +21,15 @@ from galaxy.tools.data import ToolDataTableManager
     help="loc file to append data to. Must be be loaded in general data tables",
 )
 @click.argument("uri")
-def run_import_data_bundle(uri: str, galaxy_config_file: str, tool_data_file_path: Optional[str] = None):
-    with open(galaxy_config_file) as fh:
-        galaxy_config = GalaxyAppConfiguration(override_tempdir=False, **yaml.safe_load(fh))
-    tool_data_table_config_files = []
-    if os.path.exists(galaxy_config.shed_tool_data_table_config):
-        tool_data_table_config_files.append(galaxy_config.shed_tool_data_table_config)
-    for data_table_config_path in galaxy_config.tool_data_table_config_path:
-        if os.path.exists(data_table_config_path):
-            tool_data_table_config_files.append(data_table_config_path)
+def run_import_data_bundle(uri: str, tool_data_path: str, data_table_config_path: str, data_manager_config_file: str, tool_data_file_path: Optional[str] = None):
     table_manager = ToolDataTableManager(
-        tool_data_path=galaxy_config.tool_data_path,
-        config_filename=tool_data_table_config_files,
+        tool_data_path=tool_data_path,
+        config_filename=data_table_config_path,
     )
     options = BundleProcessingOptions(
         what="data import",  # An alternative to this is sticking this in the bundle, only used for logging.
-        data_manager_path=galaxy_config.galaxy_data_manager_data_path,
-        target_config_file=galaxy_config.data_manager_config_file,
+        data_manager_path=tool_data_path,
+        target_config_file=data_manager_config_file,
         tool_data_file_path=tool_data_file_path,
     )
     if uri.startswith("file://"):
