@@ -1,13 +1,16 @@
 import os
+import tempfile
 from typing import Optional
 
 import click
 import yaml
 
-from galaxy.config import GalaxyAppConfiguration
-from galaxy.files.uris import stream_url_to_file
 from galaxy.tool_util.data import BundleProcessingOptions
 from galaxy.tools.data import ToolDataTableManager
+from galaxy.util import requests
+
+
+CHUNK_SIZE = 65536  # 64k
 
 
 @click.command(help="Import tool data bundle. URI can be a path to a zipped file or directory.")
@@ -34,12 +37,19 @@ def run_import_data_bundle(uri: str, tool_data_path: str, data_table_config_path
     )
     if uri.startswith("file://"):
         target = uri[len("file://") :]
+        table_manager.import_bundle(
+            target,
+            options,
+        )
     else:
-        target = stream_url_to_file(uri)
-    table_manager.import_bundle(
-        target,
-        options,
-    )
+        with tempfile.NamedTemporaryFile(mode="wb") as fh, requests.get(uri, stream=True) as r:
+            for chunk in r.iter_content(chunk_size=CHUNK_SIZE):
+                fh.write(chunk)
+            fh.flush()
+            table_manager.import_bundle(
+                fh.name,
+                options,
+            )
 
 
 if __name__ == "__main__":
